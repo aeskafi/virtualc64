@@ -33,9 +33,28 @@ body {
 </head>
 <body>
   <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <script type="text/javascript" src="c64_wasm_data.js"></script>
   <script type="text/javascript">
     var Module = {
         preRun: [],
+        instantiateWasm: function(imports, successCallback) {
+          if (typeof C64_WASM_BASE64 !== 'undefined' && C64_WASM_BASE64) {
+            try {
+              var raw = atob(C64_WASM_BASE64);
+              var bytes = new Uint8Array(raw.length);
+              for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+              WebAssembly.instantiate(bytes, imports).then(function(output) {
+                successCallback(output.instance);
+              }).catch(function(err) {
+                console.error('WASM instantiation failed:', err);
+              });
+              return {}; // Asynchronous instantiation signal for Emscripten
+            } catch (e) {
+              console.warn('Inline WASM decode warning, falling back:', e);
+            }
+          }
+          return false; // Fallback to fetch
+        },
         print: (function() {
             return function(text) {
                 text = Array.prototype.slice.call(arguments).join(' ');

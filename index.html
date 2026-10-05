@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/jsSID.js"></script>
+  <script src="jsSID.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -246,13 +246,17 @@ READY.
 
               <!-- 3. Dedicated WebAssembly C64 Hardware Core (.D64 / .PRG / .TAP Games) -->
               <div id="c64HardwareScreen" class="w-full h-80 sm:h-[420px] relative hidden bg-black flex flex-col">
-                <iframe id="c64EmulatorIframe" src="/emulator/c64.html" class="w-full flex-1 border-0 select-none bg-black"></iframe>
+                <iframe id="c64EmulatorIframe" src="emulator/c64.html" class="w-full flex-1 border-0 select-none bg-black"></iframe>
                 <div class="px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-300">
                   <div class="flex items-center space-x-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span id="hwDiskStatus">C64 HARDWARE ENGINE ACTIVE • DRAG & DROP ANY .D64 / .PRG / .TAP TO PLAY</span>
                   </div>
                   <div class="flex items-center space-x-2">
+                    <a href="emulator/c64.html" target="_blank" class="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold border border-blue-500 text-[10px] inline-flex items-center space-x-1 shadow">
+                      <i data-lucide="external-link" class="w-3 h-3"></i>
+                      <span>FULL WINDOW</span>
+                    </a>
                     <button onclick="reloadEmulatorCore()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[10px]">
                       RESET CORE
                     </button>
@@ -919,7 +923,7 @@ READY.
     function reloadEmulatorCore() {
       const iframe = document.getElementById('c64EmulatorIframe');
       if (iframe) {
-        iframe.src = '/emulator/c64.html?' + Date.now();
+        iframe.src = 'emulator/c64.html?' + Date.now();
         document.getElementById('hwDiskStatus').innerText = 'EMULATOR REBOOTED • 1541 DRIVE 8 READY';
       }
     }
