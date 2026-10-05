@@ -28,9 +28,12 @@ const MIME_TYPES = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8',
+  '.wasm': 'application/wasm',
   '.prg': 'application/octet-stream',
   '.d64': 'application/octet-stream',
-  '.t64': 'application/octet-stream'
+  '.t64': 'application/octet-stream',
+  '.tap': 'application/octet-stream',
+  '.sid': 'application/octet-stream'
 };
 
 export const appHandler = (req, res) => {

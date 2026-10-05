@@ -1,11 +1,11 @@
 # VirtualC64
 
-> 🕹️ Cycle-accurate Commodore 64 emulator & cross-platform Web Studio with interactive BASIC V2 terminal, Web Audio SID synthesizer, and 6502 machine code inspector.
+> 🕹️ Cycle-accurate Commodore 64 emulator & cross-platform Web Studio with WebAssembly hardware core, authentic MOS 6581/8580 SID chiptune player, interactive BASIC V2 terminal, and 6502 machine code inspector.
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg?style=flat-square)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-teal.svg?style=flat-square)](https://nodejs.org)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-success.svg?style=flat-square)](package.json)
-[![Tests Passing](https://img.shields.io/badge/Tests-10%2F10%20Passing-brightgreen.svg?style=flat-square)](tests/c64.test.js)
+[![Tests Passing](https://img.shields.io/badge/Tests-15%2F15%20Passing-brightgreen.svg?style=flat-square)](tests/c64.test.js)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-blue.svg?style=flat-square)](https://github.com/aeskafi/virtualc64/pulls)
 
 ---
@@ -14,7 +14,7 @@
 
 Originally created by **Dirk Hoffmann** as a high-precision, cycle-accurate Commodore 64 emulator for macOS, **VirtualC64** has been modernized and expanded into a cross-platform **Web Studio & Retro Computing Laboratory**.
 
-Now accessible from any modern web browser on Linux, Windows, macOS, Android, or ChromeOS with zero installation required, VirtualC64 lets developers, retro enthusiasts, and computer science students explore the architecture of the best-selling desktop computer in history.
+Now accessible from any modern web browser on Linux, Windows, macOS, Android, or ChromeOS with zero installation required, VirtualC64 lets developers, retro enthusiasts, and gamers run real Commodore 64 software, play authentic disk/tape games, and explore the architecture of the best-selling desktop computer in history.
 
 ```text
     **** COMMODORE 64 BASIC V2 ****
@@ -29,10 +29,19 @@ RUN
 
 ## ✨ Features
 
-- 💾 **Commodore 1541 Floppy Drive & Game Loader**:
-  - Drag-and-drop or upload `.PRG`, `.D64`, and `.BAS` files directly into the emulator.
-  - Native binary PRG detokenizer translates compiled C64 binaries into readable BASIC code lines.
-  - 1541 Floppy Disk Image (`.D64`) parser reads Track 18 BAM directories (`LOAD "$",8`).
+- 🕹️ **WebAssembly C64 Hardware Core (Play Real Games)**:
+  - Cycle-accurate 6510 CPU, VIC-II graphics, SID audio, and CIA 1/2 emulation running at 60 FPS in WebAssembly.
+  - Mount and play real Commodore 64 game disks and tapes: `.D64` (Floppy Disk Images), `.PRG` (Binary Executables), `.TAP` (Datassette Tapes), and `.T64`.
+  - Full keyboard mapping, virtual joystick controls, and drag-and-drop file insertion.
+  - Play legendary C64 classics like *The Last Ninja*, *The Great Giana Sisters*, *Commando*, *International Karate+*, and *Bruce Lee*.
+- 📼 **MOS 6581/8580 SID Chiptune Player & Interactive Tape Deck**:
+  - Embedded **jsSID** emulation engine (by Hermit / Mihály Horváth) executing authentic 6510 music player routines.
+  - Upload or drag-and-drop any `.SID` chiptune file (PSID/RSID v1-v2) for bit-perfect audio playback.
+  - Animated dual cassette tape reels with real-time 3-voice frequency oscilloscope visualizer.
+  - Built-in jukebox featuring classic themes from Rob Hubbard, Ben Daglish, and Chris Huelsbeck.
+- 💾 **Commodore 1541 Floppy Drive Simulator**:
+  - Native binary PRG detokenizer translating compiled C64 machine code into readable BASIC lines.
+  - 1541 Floppy Disk Image (`.D64`) parser reading Track 18 BAM directories (`LOAD "$",8`).
   - Simulated floppy head stepping audio effects and drive activity LEDs (Green PWR / Red ACT).
 - 🎮 **Playable 8-Bit Retro Arcade Games**:
   - **Space Attack 64**: Classic arcade space shooter with laser cannons (Left/Right arrows + Spacebar).

@@ -195,3 +195,30 @@ test('parseSid correctly extracts metadata from valid PSID header buffer', () =>
   assert.equal(parsed.loadAddress, 0x1000);
 });
 
+test('GET /emulator/c64.html serves the WebAssembly C64 hardware emulator shell', async () => {
+  const res = await fetch(`${baseUrl}/emulator/c64.html`);
+  assert.equal(res.status, 200);
+  assert.ok(res.headers.get('content-type').includes('text/html'));
+  const html = await res.text();
+  assert.ok(html.includes('loadC64File'));
+  assert.ok(html.includes('canvas'));
+});
+
+test('GET /emulator/c64.wasm serves the cycle-accurate C64 WebAssembly binary', async () => {
+  const res = await fetch(`${baseUrl}/emulator/c64.wasm`);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('content-type'), 'application/wasm');
+  const buf = await res.arrayBuffer();
+  assert.ok(buf.byteLength > 200000);
+});
+
+test('GET /jsSID.js serves Hermit jsSID MOS6581/8580 audio engine', async () => {
+  const res = await fetch(`${baseUrl}/jsSID.js`);
+  assert.equal(res.status, 200);
+  assert.ok(res.headers.get('content-type').includes('javascript'));
+  const js = await res.text();
+  assert.ok(js.includes('jsSID'));
+  assert.ok(js.includes('loadLocal'));
+});
+
+
