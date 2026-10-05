@@ -208,3 +208,118 @@ export const retroPlayableGames = [
     controls: 'Up Arrow to Fire Main Thruster • Left/Right to Steer'
   }
 ];
+
+/**
+ * Parses Commodore 64 PSID / RSID music files
+ * @param {Uint8Array} bytes
+ * @returns {{ magic: string, version: number, loadAddress: number, initAddress: number, playAddress: number, songsCount: number, startSong: number, title: string, author: string, released: string, sidModel: string, dataLength: number }}
+ */
+export function parseSid(bytes) {
+  if (bytes.length < 0x76) {
+    throw new Error('Invalid SID file: file too short for header');
+  }
+
+  const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+  if (magic !== 'PSID' && magic !== 'RSID') {
+    throw new Error(`Invalid SID magic header: expected PSID or RSID, got "${magic}"`);
+  }
+
+  const version = (bytes[4] << 8) | bytes[5];
+  const dataOffset = (bytes[6] << 8) | bytes[7];
+  let loadAddress = (bytes[8] << 8) | bytes[9];
+  const initAddress = (bytes[10] << 8) | bytes[11];
+  const playAddress = (bytes[12] << 8) | bytes[13];
+  const songsCount = (bytes[14] << 8) | bytes[15];
+  const startSong = (bytes[16] << 8) | bytes[17];
+  const speed = (bytes[18] << 24) | (bytes[19] << 16) | (bytes[20] << 8) | bytes[21];
+
+  function readString(offset, length) {
+    let str = '';
+    for (let i = 0; i < length; i++) {
+      const b = bytes[offset + i];
+      if (b === 0) break;
+      str += String.fromCharCode(b);
+    }
+    return str.trim();
+  }
+
+  const title = readString(0x16, 32) || 'Untitled SID';
+  const author = readString(0x36, 32) || 'Unknown Composer';
+  const released = readString(0x56, 32) || 'Commodore 64';
+
+  let sidModel = 'MOS 6581';
+  if (version >= 2 && bytes.length > 0x77) {
+    const flags = (bytes[0x76] << 8) | bytes[0x77];
+    const modelBits = (flags >> 4) & 0x03;
+    if (modelBits === 2) sidModel = 'MOS 8580';
+    else if (modelBits === 3) sidModel = 'MOS 6581 & 8580';
+  }
+
+  let c64DataOffset = dataOffset;
+  if (loadAddress === 0 && bytes.length >= dataOffset + 2) {
+    loadAddress = bytes[dataOffset] | (bytes[dataOffset + 1] << 8);
+    c64DataOffset += 2;
+  }
+
+  return {
+    magic,
+    version,
+    dataOffset,
+    loadAddress,
+    initAddress,
+    playAddress,
+    songsCount: Math.max(1, songsCount),
+    songs: Math.max(1, songsCount),
+    startSong: Math.max(1, startSong),
+    speed,
+    title,
+    author,
+    released,
+    sidModel,
+    dataLength: bytes.length - c64DataOffset
+  };
+}
+
+export const builtinSidTracks = [
+  {
+    id: 'commando',
+    title: 'Commando (Main Theme)',
+    composer: 'Rob Hubbard',
+    year: '1985',
+    publisher: 'Elite Systems',
+    tempo: 138,
+    scale: [220, 261.63, 293.66, 329.63, 392.00, 440],
+    subtunes: 1
+  },
+  {
+    id: 'last_ninja',
+    title: 'The Last Ninja (The Wilderness)',
+    composer: 'Ben Daglish & Anthony Lees',
+    year: '1987',
+    publisher: 'System 3',
+    tempo: 125,
+    scale: [196, 220, 246.94, 293.66, 329.63, 392],
+    subtunes: 3
+  },
+  {
+    id: 'giana_sisters',
+    title: 'The Great Giana Sisters',
+    composer: 'Chris Huelsbeck',
+    year: '1987',
+    publisher: 'Rainbow Arts',
+    tempo: 130,
+    scale: [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25],
+    subtunes: 4
+  },
+  {
+    id: 'ik_plus',
+    title: 'International Karate + (IK+)',
+    composer: 'Rob Hubbard',
+    year: '1987',
+    publisher: 'System 3',
+    tempo: 140,
+    scale: [174.61, 196, 220, 261.63, 293.66, 349.23],
+    subtunes: 1
+  }
+];
+

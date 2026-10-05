@@ -10,7 +10,7 @@ import {
   c64Presets,
   opcodes6502
 } from './c64/c64Data.js';
-import { retroPlayableGames } from './c64/c64Parser.js';
+import { retroPlayableGames, builtinSidTracks } from './c64/c64Parser.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,6 +100,13 @@ export const appHandler = (req, res) => {
   if (pathname === '/api/c64/games') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(retroPlayableGames));
+    return;
+  }
+
+  // API: Built-in SID Tracks
+  if (pathname === '/api/c64/sid-tracks') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(builtinSidTracks));
     return;
   }
 

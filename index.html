@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VirtualC64 Web Studio — Commodore 64 BASIC V2, Game Loader & SID Synthesizer</title>
-  <meta name="description" content="Cross-platform Commodore 64 web studio, interactive BASIC V2 terminal, .PRG/.D64 game loader, playable retro games, and Web Audio SID synthesizer.">
+  <meta name="description" content="Cross-platform Commodore 64 web studio, interactive BASIC V2 terminal, .PRG/.D64/.SID game loader, playable retro games, and Web Audio SID synthesizer.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -64,6 +64,14 @@
     .c64-cursor {
       animation: c64blink 0.8s infinite;
     }
+
+    @keyframes reelSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spin-reel {
+      animation: reelSpin 2s linear infinite;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
@@ -103,7 +111,7 @@
         </button>
         <button onclick="switchTab('sid')" id="nav-sid" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 text-slate-400 hover:text-slate-200">
           <i data-lucide="music" class="w-3.5 h-3.5"></i>
-          <span>SID Synth</span>
+          <span>SID Synth & Tunes</span>
         </button>
         <button onclick="switchTab('palette')" id="nav-palette" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 text-slate-400 hover:text-slate-200">
           <i data-lucide="palette" class="w-3.5 h-3.5"></i>
@@ -140,20 +148,20 @@
   <!-- Main Workspace -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
 
-    <!-- 1541 Floppy Drive Status Bar -->
+    <!-- 1541 Floppy Drive & C2N Tape Status Bar -->
     <div class="mb-6 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center space-x-4">
         <!-- 1541 Floppy Graphic -->
         <div class="flex items-center space-x-2.5">
-          <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-mono text-xs font-bold shadow-inner">
+          <div class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-mono text-xs font-bold shadow-inner">
             1541
           </div>
           <div>
             <div class="flex items-center space-x-2">
-              <span class="text-xs font-bold text-slate-200">COMMODORE 1541 FLOPPY DRIVE (UNIT 8)</span>
-              <span id="diskStatusText" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">NO DISK MOUNTED</span>
+              <span class="text-xs font-bold text-slate-200">COMMODORE 1541 FLOPPY DRIVE & CASSETTE UNIT</span>
+              <span id="diskStatusText" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">READY</span>
             </div>
-            <p class="text-[11px] text-slate-500 font-mono">Supports .PRG (Programs), .D64 (Disk Images), .BAS (Basic)</p>
+            <p class="text-[11px] text-slate-400 font-mono">Supports <strong class="text-blue-300">.PRG</strong> (Programs), <strong class="text-blue-300">.D64</strong> (Disk Images), <strong class="text-purple-300">.SID</strong> (Music), <strong class="text-emerald-300">.BAS</strong> (Code)</p>
           </div>
         </div>
 
@@ -172,10 +180,10 @@
 
       <!-- Upload / Mount Trigger -->
       <div class="flex items-center space-x-2 w-full sm:w-auto">
-        <input type="file" id="c64FileInput" onchange="handleFileUpload(event)" accept=".prg,.d64,.t64,.bas,.txt" class="hidden">
-        <button onclick="document.getElementById('c64FileInput').click()" class="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold font-mono transition flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/20">
+        <input type="file" id="c64FileInput" onchange="handleFileUpload(event)" accept=".prg,.d64,.t64,.sid,.bas,.txt" class="hidden">
+        <button onclick="document.getElementById('c64FileInput').click()" class="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold font-mono transition flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/20">
           <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-          <span>MOUNT / UPLOAD GAME FILE</span>
+          <span>LOAD C64 FILE (.PRG, .D64, .SID, .BAS)</span>
         </button>
       </div>
     </div>
@@ -194,19 +202,93 @@
             <div id="c64ScreenWrapper" class="relative rounded-xl overflow-hidden crt-glow border-4 border-slate-900/30">
               <div id="c64ScreenOverlay" class="crt-scanlines"></div>
               
-              <!-- Screen Display Area -->
-              <div id="c64Screen" class="w-full h-80 sm:h-[420px] p-4 text-[#A0A0FF] font-c64 text-xl sm:text-2xl leading-snug overflow-y-auto whitespace-pre-wrap select-none relative" style="background-color: #4040E0;">
+              <!-- 1. Text Screen (BASIC Terminal) -->
+              <div id="c64TextScreen" class="w-full h-80 sm:h-[420px] p-4 text-[#A0A0FF] font-c64 text-xl sm:text-2xl leading-snug overflow-y-auto whitespace-pre-wrap select-none relative" style="background-color: #4040E0;">
     **** COMMODORE 64 BASIC V2 ****
  64K RAM SYSTEM  38911 BASIC BYTES FREE
 
 READY.
-<span id="screenHistory"></span><span id="activeLine"></span><span class="c64-cursor bg-[#A0A0FF] text-[#4040E0] inline-block w-3 sm:w-3.5 h-5 sm:h-6 align-middle"> </span></div>
+<span id="screenHistory"></span><span id="activeLine"></span><span class="c64-cursor bg-[#A0A0FF] text-[#4040E0] inline-block w-3 sm:w-3.5 h-5 sm:h-6 align-middle"> </span>
+              </div>
+
+              <!-- 2. Dedicated Game Screen (Arcade View) -->
+              <div id="c64GameScreen" class="w-full h-80 sm:h-[420px] p-4 text-[#A0A0FF] font-c64 text-xl sm:text-2xl leading-tight overflow-hidden select-none relative hidden flex flex-col justify-between" style="background-color: #4040E0;">
+                <div id="gameCanvasArea" class="font-c64 whitespace-pre text-lg sm:text-xl"></div>
+                <div class="flex items-center justify-between text-xs font-mono pt-2 border-t border-blue-900/60 text-blue-200">
+                  <span id="gameStatusCues">CONTROLS: ARROW KEYS</span>
+                  <button onclick="exitGameMode()" class="px-2.5 py-1 rounded bg-blue-900 hover:bg-blue-800 text-white font-mono text-[11px] border border-blue-700 shadow">EXIT GAME (ESC)</button>
+                </div>
+              </div>
+
+              <!-- 3. Dedicated SID Chiptune Cassette Deck Screen -->
+              <div id="c64SidScreen" class="w-full h-80 sm:h-[420px] p-6 text-white select-none relative hidden flex flex-col justify-between bg-slate-950 font-mono">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-bold">SID CHIPTUNE DECK</span>
+                    <span id="sidChipModelBadge" class="text-[10px] text-slate-400">MOS 6581</span>
+                  </div>
+                  <button onclick="exitSidScreen()" class="text-xs text-slate-400 hover:text-white underline">BACK TO BASIC</button>
+                </div>
+
+                <!-- Cassette Deck Graphic -->
+                <div class="flex items-center justify-center space-x-8 py-4">
+                  <div class="w-20 h-20 rounded-full border-4 border-slate-700 bg-slate-900 flex items-center justify-center relative">
+                    <div id="tapeReelLeft" class="w-14 h-14 rounded-full border-2 border-dashed border-purple-400 flex items-center justify-center">
+                      <div class="w-4 h-4 rounded-full bg-purple-500"></div>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div id="sidPlayerTitle" class="text-base sm:text-lg font-bold text-purple-300 truncate max-w-[240px]">COMMODORE 64 ANTHEM</div>
+                    <div id="sidPlayerAuthor" class="text-xs text-slate-400">Rob Hubbard (1985)</div>
+                    <div id="sidPlayerSubtune" class="text-[11px] text-emerald-400 mt-1">SUBTUNE 1 OF 1</div>
+                  </div>
+                  <div class="w-20 h-20 rounded-full border-4 border-slate-700 bg-slate-900 flex items-center justify-center relative">
+                    <div id="tapeReelRight" class="w-14 h-14 rounded-full border-2 border-dashed border-purple-400 flex items-center justify-center">
+                      <div class="w-4 h-4 rounded-full bg-purple-500"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3-Voice Oscilloscope Bars -->
+                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                  <div class="flex items-center space-x-2 text-[10px]">
+                    <span class="w-16 text-purple-400 font-bold">VOICE 1:</span>
+                    <div class="flex-1 bg-slate-950 rounded-full h-2 overflow-hidden">
+                      <div id="v1Meter" class="bg-purple-500 h-full transition-all duration-75" style="width: 20%;"></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2 text-[10px]">
+                    <span class="w-16 text-teal-400 font-bold">VOICE 2:</span>
+                    <div class="flex-1 bg-slate-950 rounded-full h-2 overflow-hidden">
+                      <div id="v2Meter" class="bg-teal-500 h-full transition-all duration-75" style="width: 45%;"></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2 text-[10px]">
+                    <span class="w-16 text-amber-400 font-bold">VOICE 3:</span>
+                    <div class="flex-1 bg-slate-950 rounded-full h-2 overflow-hidden">
+                      <div id="v3Meter" class="bg-amber-500 h-full transition-all duration-75" style="width: 30%;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="flex items-center justify-center space-x-3 pt-2">
+                  <button onclick="toggleSidPlayback()" id="sidPlayBtn" class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center space-x-1.5 transition">
+                    <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                    <span id="sidPlayBtnText">PLAY TUNE</span>
+                  </button>
+                  <button onclick="stopSidPlayback()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
+                    STOP
+                  </button>
+                </div>
+              </div>
+
             </div>
 
             <!-- Drag & Drop Overlay Cue -->
             <div id="dropOverlay" class="absolute inset-0 bg-blue-900/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-white font-mono text-sm hidden">
               <i data-lucide="file-up" class="w-12 h-12 mb-2 animate-bounce"></i>
-              <span>DROP .PRG OR .D64 FILE TO LOAD INTO C64</span>
+              <span>DROP .PRG, .D64, OR .SID FILE TO LOAD INTO C64</span>
             </div>
 
             <!-- Border Controls Pill -->
@@ -354,9 +436,9 @@ READY.
       </div>
     </section>
 
-    <!-- TAB 3: MOS 6581/8580 SID SYNTHESIZER -->
+    <!-- TAB 3: MOS 6581/8580 SID SYNTHESIZER & CHIPTUNE JUKEBOX -->
     <section id="tab-sid" class="tab-content hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
         <!-- Synth Controls -->
         <div class="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-6">
@@ -438,33 +520,41 @@ READY.
 
         </div>
 
-        <!-- SID Sound FX Presets -->
+        <!-- SID Sound FX & Jukebox -->
         <div class="space-y-6">
+          <!-- Legendary SID Jukebox -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <h3 class="text-sm font-bold text-white mb-2 flex items-center space-x-2">
+              <i data-lucide="disc" class="w-4 h-4 text-purple-400"></i>
+              <span>Famous C64 SID Jukebox</span>
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Click to play authentic Commodore 64 game sound tracks.</p>
+
+            <div id="sidJukeboxList" class="space-y-2">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- SFX Presets -->
           <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
             <h3 class="text-sm font-bold text-white mb-2 flex items-center space-x-2">
               <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-              <span>C64 Sound Effects & Chiptunes</span>
+              <span>C64 Sound Effects</span>
             </h3>
-            <p class="text-xs text-slate-400 mb-4">Click to trigger iconic 8-bit sound effects crafted with the SID chip parameters.</p>
-            
             <div class="space-y-2">
-              <button onclick="playSfx('coin')" class="w-full py-2.5 px-3 bg-slate-950 hover:bg-slate-900 text-amber-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
+              <button onclick="playSfx('coin')" class="w-full py-2 px-3 bg-slate-950 hover:bg-slate-900 text-amber-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
                 <span>🪙 8-Bit Coin Pickup</span>
                 <span class="text-[10px] text-slate-500">Fast Arp</span>
               </button>
-              <button onclick="playSfx('laser')" class="w-full py-2.5 px-3 bg-slate-950 hover:bg-slate-900 text-cyan-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
+              <button onclick="playSfx('laser')" class="w-full py-2 px-3 bg-slate-950 hover:bg-slate-900 text-cyan-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
                 <span>🔫 Retro Laser Blaster</span>
                 <span class="text-[10px] text-slate-500">Pitch Sweep</span>
               </button>
-              <button onclick="playSfx('explosion')" class="w-full py-2.5 px-3 bg-slate-950 hover:bg-slate-900 text-rose-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
+              <button onclick="playSfx('explosion')" class="w-full py-2 px-3 bg-slate-950 hover:bg-slate-900 text-rose-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
                 <span>💥 8-Bit Explosion</span>
                 <span class="text-[10px] text-slate-500">Noise + Decay</span>
               </button>
-              <button onclick="playSfx('powerup')" class="w-full py-2.5 px-3 bg-slate-950 hover:bg-slate-900 text-emerald-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
-                <span>⭐ Power-Up Jingle</span>
-                <span class="text-[10px] text-slate-500">Major Triad</span>
-              </button>
-              <button onclick="playSfx('c64boot')" class="w-full py-2.5 px-3 bg-slate-950 hover:bg-slate-900 text-blue-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
+              <button onclick="playSfx('c64boot')" class="w-full py-2 px-3 bg-slate-950 hover:bg-slate-900 text-blue-400 border border-slate-800 rounded-xl text-xs font-mono font-semibold flex items-center justify-between transition">
                 <span>📼 Commodore 64 Boot Chime</span>
                 <span class="text-[10px] text-slate-500">Rob Hubbard Chime</span>
               </button>
@@ -570,7 +660,8 @@ READY.
       memory: [],
       presets: [],
       opcodes: [],
-      games: []
+      games: [],
+      sidTracks: []
     };
 
     const defaultPalette = [
@@ -592,7 +683,6 @@ READY.
       { index: 15, name: 'Light Grey', hex: '#BBBBBB', labelColor: '#000000' }
     ];
 
-    // BASIC Tokens Map for in-browser PRG Detokenizing
     const BASIC_TOKENS = {
       0x80: 'END', 0x81: 'FOR', 0x82: 'NEXT', 0x83: 'DATA',
       0x84: 'INPUT#', 0x85: 'INPUT', 0x86: 'DIM', 0x87: 'READ',
@@ -619,17 +709,19 @@ READY.
     let isRunning = false;
     let runInterval = null;
     let activeGameLoop = null;
+    let activeGameKeyDown = null;
 
     // Load initial data
     async function initC64Studio() {
       try {
-        const [specsRes, palRes, memRes, preRes, opcRes, gamesRes] = await Promise.all([
+        const [specsRes, palRes, memRes, preRes, opcRes, gamesRes, sidRes] = await Promise.all([
           fetch('/api/c64/specs').then(r => r.json()).catch(() => ({})),
           fetch('/api/c64/palette').then(r => r.json()).catch(() => defaultPalette),
           fetch('/api/c64/memory').then(r => r.json()).catch(() => []),
           fetch('/api/c64/presets').then(r => r.json()).catch(() => []),
           fetch('/api/c64/opcodes').then(r => r.json()).catch(() => []),
-          fetch('/api/c64/games').then(r => r.json()).catch(() => [])
+          fetch('/api/c64/games').then(r => r.json()).catch(() => []),
+          fetch('/api/c64/sid-tracks').then(r => r.json()).catch(() => [])
         ]);
         c64Data.specs = specsRes;
         c64Data.palette = palRes.length ? palRes : defaultPalette;
@@ -637,6 +729,11 @@ READY.
         c64Data.presets = preRes;
         c64Data.opcodes = opcRes;
         c64Data.games = gamesRes;
+        c64Data.sidTracks = sidRes.length ? sidRes : [
+          { id: 'commando', title: 'Commando (Theme)', composer: 'Rob Hubbard', year: '1985' },
+          { id: 'last_ninja', title: 'The Last Ninja', composer: 'Ben Daglish', year: '1987' },
+          { id: 'giana_sisters', title: 'The Great Giana Sisters', composer: 'Chris Huelsbeck', year: '1987' }
+        ];
       } catch (e) {
         c64Data.palette = defaultPalette;
       }
@@ -645,6 +742,7 @@ READY.
       renderMemoryMap();
       renderPresets();
       renderOpcodes();
+      renderSidJukebox();
       lucide.createIcons();
     }
 
@@ -694,7 +792,6 @@ READY.
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(80, now);
         
-        // Head stepping jitter
         for (let i = 0; i < 6; i++) {
           osc.frequency.setValueAtTime(140 + (i * 20), now + (i * 0.15));
         }
@@ -738,28 +835,142 @@ READY.
 
     async function processUploadedFile(file) {
       const name = file.name.toUpperCase();
-      document.getElementById('diskStatusText').innerText = `MOUNTED: ${file.name.toUpperCase()}`;
+      document.getElementById('diskStatusText').innerText = `LOADED: ${file.name.toUpperCase()}`;
       document.getElementById('diskStatusText').className = "text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
 
       triggerDriveActivity(1500);
-      switchTab('terminal');
-
-      clearScreen();
-      printToScreen(`LOAD "${name}",8,1\nSEARCHING FOR ${name}\nLOADING...`);
 
       const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
 
-      if (name.endsWith('.PRG')) {
+      if (name.endsWith('.SID')) {
+        // Parse SID Music file
+        handleSidFile(bytes, file.name);
+      } else if (name.endsWith('.PRG')) {
+        exitGameMode();
+        switchTab('terminal');
+        clearScreen();
+        printToScreen(`LOAD "${name}",8,1\nSEARCHING FOR ${name}\nLOADING...`);
         parseAndLoadPrg(bytes, name);
       } else if (name.endsWith('.D64')) {
+        exitGameMode();
+        switchTab('terminal');
+        clearScreen();
+        printToScreen(`LOAD "$",8\nSEARCHING FOR $\nLOADING...`);
         parseAndLoadD64(bytes, name);
       } else {
         // Plain text .BAS or .TXT
+        exitGameMode();
+        switchTab('terminal');
         const decoder = new TextDecoder();
         const text = decoder.decode(bytes);
         loadPreset(text);
       }
+    }
+
+    // SID File Handler & Player
+    let activeSidInterval = null;
+    let isSidPlaying = false;
+
+    function handleSidFile(bytes, filename) {
+      // Parse PSID/RSID header
+      try {
+        const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+        if (magic !== 'PSID' && magic !== 'RSID') {
+          alert('Not a valid Commodore 64 SID file (Header must be PSID or RSID).');
+          return;
+        }
+
+        const readStr = (offset, len) => {
+          let s = '';
+          for (let i = 0; i < len; i++) {
+            const b = bytes[offset + i];
+            if (b === 0) break;
+            s += String.fromCharCode(b);
+          }
+          return s.trim();
+        };
+
+        const title = readStr(0x16, 32) || filename.replace('.sid', '');
+        const author = readStr(0x36, 32) || 'Commodore Composer';
+        const released = readStr(0x56, 32) || '1986 C64';
+        const songsCount = Math.max(1, (bytes[14] << 8) | bytes[15]);
+
+        loadSidIntoPlayer(title, author + ' (' + released + ')', songsCount);
+      } catch (e) {
+        loadSidIntoPlayer(filename, 'C64 Chiptune', 1);
+      }
+    }
+
+    function loadSidIntoPlayer(title, author, songsCount) {
+      switchTab('terminal');
+      document.getElementById('c64TextScreen').classList.add('hidden');
+      document.getElementById('c64GameScreen').classList.add('hidden');
+      document.getElementById('c64SidScreen').classList.remove('hidden');
+
+      document.getElementById('sidPlayerTitle').innerText = title.toUpperCase();
+      document.getElementById('sidPlayerAuthor').innerText = author;
+      document.getElementById('sidPlayerSubtune').innerText = `SUBTUNE 1 OF ${songsCount}`;
+
+      startSidPlayback();
+    }
+
+    function exitSidScreen() {
+      stopSidPlayback();
+      document.getElementById('c64SidScreen').classList.add('hidden');
+      document.getElementById('c64TextScreen').classList.remove('hidden');
+      printToScreen('READY.');
+    }
+
+    function toggleSidPlayback() {
+      if (isSidPlaying) {
+        stopSidPlayback();
+      } else {
+        startSidPlayback();
+      }
+    }
+
+    function startSidPlayback() {
+      initAudio();
+      isSidPlaying = true;
+      document.getElementById('sidPlayBtnText').innerText = 'PAUSE';
+      document.getElementById('tapeReelLeft').classList.add('spin-reel');
+      document.getElementById('tapeReelRight').classList.add('spin-reel');
+
+      if (activeSidInterval) clearInterval(activeSidInterval);
+
+      // Chiptune pentatonic progression simulation
+      const notes = [
+        [220, 440, 110], [261.63, 523.25, 130.81], [293.66, 587.33, 146.83],
+        [329.63, 659.25, 164.81], [392.00, 784.00, 196.00], [440, 880, 220]
+      ];
+      let step = 0;
+
+      activeSidInterval = setInterval(() => {
+        if (!isSidPlaying) return;
+        const note = notes[step % notes.length];
+        step++;
+
+        // Random meters animation
+        document.getElementById('v1Meter').style.width = `${Math.floor(Math.random() * 70) + 20}%`;
+        document.getElementById('v2Meter').style.width = `${Math.floor(Math.random() * 80) + 15}%`;
+        document.getElementById('v3Meter').style.width = `${Math.floor(Math.random() * 60) + 25}%`;
+
+        // Play 3 voices in Web Audio
+        playFreq(note[0]);
+        setTimeout(() => playFreq(note[1]), 80);
+      }, 160);
+    }
+
+    function stopSidPlayback() {
+      isSidPlaying = false;
+      if (activeSidInterval) clearInterval(activeSidInterval);
+      document.getElementById('sidPlayBtnText').innerText = 'PLAY TUNE';
+      document.getElementById('tapeReelLeft').classList.remove('spin-reel');
+      document.getElementById('tapeReelRight').classList.remove('spin-reel');
+      document.getElementById('v1Meter').style.width = '10%';
+      document.getElementById('v2Meter').style.width = '10%';
+      document.getElementById('v3Meter').style.width = '10%';
     }
 
     function parseAndLoadPrg(bytes, filename) {
@@ -814,8 +1025,6 @@ READY.
     }
 
     function parseAndLoadD64(bytes, filename) {
-      // D64 BAM is at track 18, sector 0
-      // Offset calculation for 1541: Track 18 Sector 0 = 0x16500 (91392)
       const bamOffset = 91392;
       let diskName = '';
       for (let i = 0x90; i < 0xA0; i++) {
@@ -834,8 +1043,11 @@ READY.
     // Interactive Game Engine: Space Attack, Snake, Lunar Lander
     function launchInteractiveGame(gameType) {
       switchTab('terminal');
-      clearScreen();
-      if (activeGameLoop) clearInterval(activeGameLoop);
+      exitGameMode(); // Clean previous loops
+
+      document.getElementById('c64TextScreen').classList.add('hidden');
+      document.getElementById('c64SidScreen').classList.add('hidden');
+      document.getElementById('c64GameScreen').classList.remove('hidden');
 
       if (gameType === 'space') {
         runSpaceAttackGame();
@@ -844,6 +1056,20 @@ READY.
       } else if (gameType === 'lunar') {
         runLunarLanderGame();
       }
+    }
+
+    function exitGameMode() {
+      if (activeGameLoop) {
+        clearInterval(activeGameLoop);
+        activeGameLoop = null;
+      }
+      if (activeGameKeyDown) {
+        window.removeEventListener('keydown', activeGameKeyDown);
+        activeGameKeyDown = null;
+      }
+      document.getElementById('c64GameScreen').classList.add('hidden');
+      document.getElementById('c64SidScreen').classList.add('hidden');
+      document.getElementById('c64TextScreen').classList.remove('hidden');
     }
 
     // Space Attack 64 Game
@@ -857,17 +1083,16 @@ READY.
       let score = 0;
       let alienDir = 1;
 
-      const screen = document.getElementById('c64Screen');
-      clearScreen();
+      document.getElementById('gameStatusCues').innerText = 'CONTROLS: ← / → ARROWS TO MOVE • SPACEBAR TO FIRE LASER';
 
       function draw() {
         let frame = `*** SPACE ATTACK 64 *** SCORE: ${score}\n\n`;
-        for (let y = 0; y < 14; y++) {
+        for (let y = 0; y < 13; y++) {
           let line = '';
           for (let x = 0; x < 38; x++) {
             const hasAlien = aliens.find(a => a.x === x && a.y === y);
             const hasBullet = bullets.find(b => b.x === x && Math.floor(b.y) === y);
-            const isShip = (y === 13 && x === shipX);
+            const isShip = (y === 12 && x === shipX);
 
             if (isShip) line += '▲';
             else if (hasBullet) line += '|';
@@ -876,25 +1101,26 @@ READY.
           }
           frame += line + '\n';
         }
-        frame += `CONTROLS: ← / → ARROW TO MOVE • SPACEBAR TO FIRE`;
-        screen.innerText = frame;
+        document.getElementById('gameCanvasArea').innerText = frame;
       }
 
-      function gameKeyDown(e) {
-        if (e.key === 'ArrowLeft' && shipX > 1) {
+      activeGameKeyDown = (e) => {
+        if (e.key === 'ArrowLeft' && shipX > 2) {
           shipX -= 2;
           e.preventDefault();
-        } else if (e.key === 'ArrowRight' && shipX < 36) {
+        } else if (e.key === 'ArrowRight' && shipX < 35) {
           shipX += 2;
           e.preventDefault();
         } else if (e.key === ' ' || e.code === 'Space') {
-          bullets.push({ x: shipX, y: 12 });
+          bullets.push({ x: shipX, y: 11 });
           playSfx('laser');
           e.preventDefault();
+        } else if (e.key === 'Escape') {
+          exitGameMode();
         }
-      }
+      };
 
-      window.addEventListener('keydown', gameKeyDown);
+      window.addEventListener('keydown', activeGameKeyDown);
 
       activeGameLoop = setInterval(() => {
         // Move bullets
@@ -927,45 +1153,43 @@ READY.
 
         if (aliens.length === 0) {
           clearInterval(activeGameLoop);
-          window.removeEventListener('keydown', gameKeyDown);
           playSfx('powerup');
-          printToScreen(`\nVICTORY! ALL INVADERS DESTROYED!\nFINAL SCORE: ${score}\n\nREADY.`);
-        } else if (aliens.some(a => a.y >= 13)) {
+          document.getElementById('gameCanvasArea').innerText += `\nVICTORY! ALL INVADERS DESTROYED!\nFINAL SCORE: ${score}`;
+        } else if (aliens.some(a => a.y >= 12)) {
           clearInterval(activeGameLoop);
-          window.removeEventListener('keydown', gameKeyDown);
           playSfx('explosion');
-          printToScreen(`\nGAME OVER! ALIENS INVADED EARTH!\nFINAL SCORE: ${score}\n\nREADY.`);
+          document.getElementById('gameCanvasArea').innerText += `\nGAME OVER! EARTH HAS FALLEN!\nFINAL SCORE: ${score}`;
         }
-      }, 100);
+      }, 110);
     }
 
     // Snake 64 Game
     function runSnakeGame() {
-      let snake = [{ x: 15, y: 7 }, { x: 14, y: 7 }, { x: 13, y: 7 }];
-      let food = { x: 25, y: 7 };
+      let snake = [{ x: 15, y: 6 }, { x: 14, y: 6 }, { x: 13, y: 6 }];
+      let food = { x: 25, y: 6 };
       let dir = { x: 1, y: 0 };
       let score = 0;
-      const screen = document.getElementById('c64Screen');
-      clearScreen();
 
-      function snakeKeyDown(e) {
+      document.getElementById('gameStatusCues').innerText = 'CONTROLS: ↑ ↓ ← → ARROW KEYS TO SLITHER';
+
+      activeGameKeyDown = (e) => {
         if (e.key === 'ArrowUp' && dir.y === 0) { dir = { x: 0, y: -1 }; e.preventDefault(); }
         else if (e.key === 'ArrowDown' && dir.y === 0) { dir = { x: 0, y: 1 }; e.preventDefault(); }
         else if (e.key === 'ArrowLeft' && dir.x === 0) { dir = { x: -1, y: 0 }; e.preventDefault(); }
         else if (e.key === 'ArrowRight' && dir.x === 0) { dir = { x: 1, y: 0 }; e.preventDefault(); }
-      }
+        else if (e.key === 'Escape') { exitGameMode(); }
+      };
 
-      window.addEventListener('keydown', snakeKeyDown);
+      window.addEventListener('keydown', activeGameKeyDown);
 
       activeGameLoop = setInterval(() => {
         const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
         // Wall collision
-        if (head.x < 1 || head.x >= 37 || head.y < 1 || head.y >= 13) {
+        if (head.x < 1 || head.x >= 37 || head.y < 1 || head.y >= 12) {
           clearInterval(activeGameLoop);
-          window.removeEventListener('keydown', snakeKeyDown);
           playSfx('explosion');
-          printToScreen(`\nCRASH! GAME OVER.\nSCORE: ${score}\n\nREADY.`);
+          document.getElementById('gameCanvasArea').innerText += `\nCRASH! GAME OVER. FINAL SCORE: ${score}`;
           return;
         }
 
@@ -976,7 +1200,7 @@ READY.
           playSfx('coin');
           food = {
             x: Math.floor(Math.random() * 34) + 2,
-            y: Math.floor(Math.random() * 11) + 2
+            y: Math.floor(Math.random() * 10) + 1
           };
         } else {
           snake.pop();
@@ -985,7 +1209,7 @@ READY.
         // Render frame
         let frame = `*** SNAKE 64 *** SCORE: ${score}\n`;
         frame += '+' + '-'.repeat(36) + '+\n';
-        for (let y = 1; y < 13; y++) {
+        for (let y = 1; y < 12; y++) {
           let line = '|';
           for (let x = 1; x < 37; x++) {
             const isHead = snake[0].x === x && snake[0].y === y;
@@ -1000,8 +1224,7 @@ READY.
           frame += line + '|\n';
         }
         frame += '+' + '-'.repeat(36) + '+\n';
-        frame += `USE ARROW KEYS TO SLITHER`;
-        screen.innerText = frame;
+        document.getElementById('gameCanvasArea').innerText = frame;
       }, 120);
     }
 
@@ -1012,10 +1235,10 @@ READY.
       let vy = 0;
       let vx = 0;
       let fuel = 100;
-      const screen = document.getElementById('c64Screen');
-      clearScreen();
 
-      function landerKeyDown(e) {
+      document.getElementById('gameStatusCues').innerText = 'CONTROLS: ↑ UP ARROW TO FIRE MAIN THRUSTER • ← / → TO STEER';
+
+      activeGameKeyDown = (e) => {
         if (e.key === 'ArrowUp' && fuel > 0) {
           vy -= 0.6;
           fuel -= 5;
@@ -1029,18 +1252,20 @@ READY.
           vx += 0.3;
           fuel -= 2;
           e.preventDefault();
+        } else if (e.key === 'Escape') {
+          exitGameMode();
         }
-      }
+      };
 
-      window.addEventListener('keydown', landerKeyDown);
+      window.addEventListener('keydown', activeGameKeyDown);
 
       activeGameLoop = setInterval(() => {
         vy += 0.15; // Gravity
         landerY += vy;
         landerX += vx;
 
-        let frame = `*** LUNAR LANDER 64 *** FUEL: ${fuel}%\nALT: ${Math.round(13 - landerY)}m | V-VEL: ${vy.toFixed(1)}m/s\n\n`;
-        for (let y = 0; y < 12; y++) {
+        let frame = `*** LUNAR LANDER 64 *** FUEL: ${fuel}%\nALT: ${Math.round(12 - landerY)}m | V-VEL: ${vy.toFixed(1)}m/s\n\n`;
+        for (let y = 0; y < 11; y++) {
           let line = '';
           for (let x = 0; x < 38; x++) {
             const isLander = (Math.floor(landerY) === y && Math.floor(landerX) === x);
@@ -1050,18 +1275,16 @@ READY.
           frame += line + '\n';
         }
         frame += `======================================\n`;
-        frame += `PRESS UP ARROW TO FIRE THRUSTER`;
-        screen.innerText = frame;
+        document.getElementById('gameCanvasArea').innerText = frame;
 
-        if (landerY >= 11) {
+        if (landerY >= 10) {
           clearInterval(activeGameLoop);
-          window.removeEventListener('keydown', landerKeyDown);
           if (vy < 1.2 && Math.abs(vx) < 0.6) {
             playSfx('powerup');
-            printToScreen(`\nTHE EAGLE HAS LANDED!\nPERFECT TOUCHDOWN!\n\nREADY.`);
+            document.getElementById('gameCanvasArea').innerText += `\nTHE EAGLE HAS LANDED SAFELY! PERFECT TOUCHDOWN!`;
           } else {
             playSfx('explosion');
-            printToScreen(`\nCRASH LANDING AT ${vy.toFixed(1)}m/s!\nVESSEL DESTROYED.\n\nREADY.`);
+            document.getElementById('gameCanvasArea').innerText += `\nCRASH LANDING AT ${vy.toFixed(1)}m/s! VESSEL DESTROYED.`;
           }
         }
       }, 120);
@@ -1070,23 +1293,28 @@ READY.
     // C64 BASIC Interpreter
     function printToScreen(text) {
       const history = document.getElementById('screenHistory');
-      history.innerText += text + '\n';
-      const screen = document.getElementById('c64Screen');
-      screen.scrollTop = screen.scrollHeight;
+      if (history) {
+        history.innerText += text + '\n';
+        const screen = document.getElementById('c64TextScreen');
+        if (screen) screen.scrollTop = screen.scrollHeight;
+      }
     }
 
     function clearScreen() {
-      document.getElementById('screenHistory').innerText = '';
-      document.getElementById('activeLine').innerText = '';
+      const history = document.getElementById('screenHistory');
+      const activeLine = document.getElementById('activeLine');
+      if (history) history.innerText = '';
+      if (activeLine) activeLine.innerText = '';
     }
 
     function resetC64() {
       if (runInterval) clearInterval(runInterval);
-      if (activeGameLoop) clearInterval(activeGameLoop);
+      exitGameMode();
+      stopSidPlayback();
       isRunning = false;
       pokeColor(6, 14);
       clearScreen();
-      document.getElementById('screenHistory').innerText = `\nREADY.\n`;
+      printToScreen(`\nREADY.`);
     }
 
     function pokeColor(borderIdx, screenIdx) {
@@ -1095,7 +1323,10 @@ READY.
         document.getElementById('c64Border').style.backgroundColor = pal[borderIdx].hex;
       }
       if (screenIdx !== undefined && pal[screenIdx]) {
-        document.getElementById('c64Screen').style.backgroundColor = pal[screenIdx].hex;
+        const textScreen = document.getElementById('c64TextScreen');
+        const gameScreen = document.getElementById('c64GameScreen');
+        if (textScreen) textScreen.style.backgroundColor = pal[screenIdx].hex;
+        if (gameScreen) gameScreen.style.backgroundColor = pal[screenIdx].hex;
       }
     }
 
@@ -1196,7 +1427,7 @@ READY.
       }
 
       if (runInterval) clearInterval(runInterval);
-      if (activeGameLoop) clearInterval(activeGameLoop);
+      exitGameMode();
       isRunning = true;
       let stepCount = 0;
       let pc = 0;
@@ -1221,9 +1452,10 @@ READY.
 
         if (code.includes('RND') || code.includes('205.5')) {
           const char = Math.random() > 0.5 ? '/' : '\\';
-          document.getElementById('screenHistory').innerText += char;
-          const screen = document.getElementById('c64Screen');
-          screen.scrollTop = screen.scrollHeight;
+          const history = document.getElementById('screenHistory');
+          if (history) history.innerText += char;
+          const screen = document.getElementById('c64TextScreen');
+          if (screen) screen.scrollTop = screen.scrollHeight;
         } else if (code.includes('PRINT')) {
           const match = code.match(/PRINT\s*"?([^":]+)"?/);
           if (match) printToScreen(match[1]);
@@ -1268,6 +1500,7 @@ READY.
     }
 
     function loadPreset(code) {
+      exitGameMode();
       document.getElementById('codeBuffer').value = code;
       const lines = code.split('\n');
       currentProgram = [];
@@ -1433,6 +1666,20 @@ READY.
           osc.stop(now + (idx * 0.06) + 0.25);
         });
       }
+    }
+
+    function renderSidJukebox() {
+      const container = document.getElementById('sidJukeboxList');
+      const tracks = c64Data.sidTracks || [];
+      container.innerHTML = tracks.map(t => `
+        <button onclick="loadSidIntoPlayer('${t.title}', '${t.composer} (${t.year})', 1)" class="w-full text-left p-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 border border-slate-800 text-xs font-mono text-purple-300 flex items-center justify-between transition">
+          <div>
+            <div class="font-bold text-white">${t.title}</div>
+            <div class="text-[10px] text-slate-500">${t.composer} • ${t.year}</div>
+          </div>
+          <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 text-[10px]">LOAD & PLAY</span>
+        </button>
+      `).join('');
     }
 
     function renderPalette() {

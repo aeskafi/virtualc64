@@ -11,7 +11,9 @@ import {
 } from '../c64/c64Data.js';
 import {
   detokenizePrg,
-  retroPlayableGames
+  retroPlayableGames,
+  builtinSidTracks,
+  parseSid
 } from '../c64/c64Parser.js';
 
 let serverInstance;
@@ -150,3 +152,46 @@ test('Data integrity: VIC-II palette contains exactly 16 distinct colors with in
     assert.ok(c64Palette[i].hex.startsWith('#'));
   }
 });
+
+test('GET /api/c64/sid-tracks returns classic C64 chiptunes', async () => {
+  const res = await fetch(`${baseUrl}/api/c64/sid-tracks`);
+  assert.equal(res.status, 200);
+  const tracks = await res.json();
+  assert.ok(Array.isArray(tracks));
+  assert.ok(tracks.length >= 3);
+  const commando = tracks.find(t => t.id === 'commando');
+  assert.ok(commando);
+  assert.equal(commando.composer, 'Rob Hubbard');
+});
+
+test('parseSid correctly extracts metadata from valid PSID header buffer', () => {
+  // Construct a minimal 124-byte PSID buffer
+  const buf = new Uint8Array(128);
+  // Magic: 'PSID'
+  buf[0] = 0x50; buf[1] = 0x53; buf[2] = 0x49; buf[3] = 0x44;
+  // Version 2
+  buf[4] = 0x00; buf[5] = 0x02;
+  // Data offset: 0x7C (124 bytes)
+  buf[6] = 0x00; buf[7] = 0x7C;
+  // Load address: 0x1000
+  buf[8] = 0x10; buf[9] = 0x00;
+  // Songs count: 1
+  buf[0x0E] = 0x00; buf[0x0F] = 0x01;
+  // Start song: 1
+  buf[0x10] = 0x00; buf[0x11] = 0x01;
+  // Title at 0x16: "Test Tune"
+  const title = "Test Tune";
+  for (let i = 0; i < title.length; i++) buf[0x16 + i] = title.charCodeAt(i);
+  // Author at 0x36: "Martin Galway"
+  const author = "Martin Galway";
+  for (let i = 0; i < author.length; i++) buf[0x36 + i] = author.charCodeAt(i);
+
+  const parsed = parseSid(buf);
+  assert.equal(parsed.magic, 'PSID');
+  assert.equal(parsed.version, 2);
+  assert.equal(parsed.title, 'Test Tune');
+  assert.equal(parsed.author, 'Martin Galway');
+  assert.equal(parsed.songs, 1);
+  assert.equal(parsed.loadAddress, 0x1000);
+});
+
