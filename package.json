@@ -1,0 +1,29 @@
+{
+  "name": "virtualc64",
+  "version": "5.0.0",
+  "description": "Cycle-accurate Commodore 64 emulator & cross-platform Web Studio with interactive BASIC V2 terminal, SID synthesizer, and 6502 assembler.",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "NODE_ENV=test node --test tests/*.test.js"
+  },
+  "keywords": [
+    "c64",
+    "commodore64",
+    "emulator",
+    "6502",
+    "6510",
+    "vic-ii",
+    "sid",
+    "basic-v2",
+    "petscii",
+    "retro-computing"
+  ],
+  "author": "Arham Eskafi <contact@arham.dev> (https://arham.dev)",
+  "contributors": [
+    "Dirk Hoffmann <https://github.com/dirkwhoffmann>"
+  ],
+  "license": "GPL-3.0"
+}

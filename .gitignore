@@ -19,3 +19,8 @@ xcuserdata/
 *.xcscmblueprint
 *xcworkspace
 .DS_Store
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
