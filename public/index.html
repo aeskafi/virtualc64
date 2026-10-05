@@ -199,23 +199,28 @@
           <!-- Screen Mode Selector Bar -->
           <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs font-mono">
             <div class="flex flex-wrap items-center gap-1.5">
-              <span class="text-slate-400 text-[11px] font-bold">CORE MODE:</span>
-              <button onclick="switchScreenMode('hardware')" id="modeBtn-hardware" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs transition flex items-center space-x-1 shadow-sm">
-                <i data-lucide="play" class="w-3 h-3"></i>
-                <span>C64 HARDWARE CORE (.D64/.PRG)</span>
+              <span class="text-slate-400 text-[11px] font-bold">MODE:</span>
+              <button onclick="switchScreenMode('terminal')" id="modeBtn-terminal" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs transition">
+                💻 BASIC V2
               </button>
-              <button onclick="switchScreenMode('terminal')" id="modeBtn-terminal" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
-                BASIC V2
+              <button onclick="launchInteractiveGame('ninja')" id="modeBtn-ninja" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white font-bold text-xs transition border border-amber-500/30 flex items-center space-x-1">
+                <span>🥷 THE LAST NINJA</span>
               </button>
-              <button onclick="switchScreenMode('games')" id="modeBtn-games" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
-                RETRO ARCADE
+              <button onclick="launchInteractiveGame('space')" id="modeBtn-space" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
+                🚀 SPACE ATTACK
+              </button>
+              <button onclick="launchInteractiveGame('snake')" id="modeBtn-snake" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
+                🐍 SNAKE 64
               </button>
               <button onclick="switchScreenMode('sid')" id="modeBtn-sid" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
-                SID TAPE DECK
+                📼 SID JUKEBOX
               </button>
             </div>
             <div class="flex items-center space-x-2 text-[11px]">
-              <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">1541 DRIVE 8 READY</span>
+              <button onclick="document.getElementById('c64FileInput').click()" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] inline-flex items-center space-x-1 shadow">
+                <i data-lucide="upload" class="w-3 h-3"></i>
+                <span>LOAD .D64 / .PRG / .SID</span>
+              </button>
             </div>
           </div>
 
@@ -235,37 +240,17 @@ READY.
 <span id="screenHistory"></span><span id="activeLine"></span><span class="c64-cursor bg-[#A0A0FF] text-[#4040E0] inline-block w-3 sm:w-3.5 h-5 sm:h-6 align-middle"> </span>
               </div>
 
-              <!-- 2. Dedicated Game Screen (Arcade View) -->
+              <!-- 2. Dedicated Playable Game Screen -->
               <div id="c64GameScreen" class="w-full h-80 sm:h-[420px] p-4 text-[#A0A0FF] font-c64 text-xl sm:text-2xl leading-tight overflow-hidden select-none relative hidden flex flex-col justify-between" style="background-color: #4040E0;">
                 <div id="gameCanvasArea" class="font-c64 whitespace-pre text-lg sm:text-xl"></div>
                 <div class="flex items-center justify-between text-xs font-mono pt-2 border-t border-blue-900/60 text-blue-200">
                   <span id="gameStatusCues">CONTROLS: ARROW KEYS</span>
-                  <button onclick="exitGameMode()" class="px-2.5 py-1 rounded bg-blue-900 hover:bg-blue-800 text-white font-mono text-[11px] border border-blue-700 shadow">EXIT GAME (ESC)</button>
-                </div>
-              </div>
-
-              <!-- 3. Dedicated WebAssembly C64 Hardware Core (.D64 / .PRG / .TAP Games) -->
-              <div id="c64HardwareScreen" class="w-full h-80 sm:h-[420px] relative hidden bg-black flex flex-col">
-                <iframe id="c64EmulatorIframe" src="emulator/c64.html" class="w-full flex-1 border-0 select-none bg-black"></iframe>
-                <div class="px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-300">
                   <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="hwDiskStatus">C64 HARDWARE ENGINE ACTIVE • DRAG & DROP ANY .D64 / .PRG / .TAP TO PLAY</span>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <button onclick="document.getElementById('c64FileInput').click()" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] inline-flex items-center space-x-1 shadow">
-                      <i data-lucide="upload" class="w-3 h-3"></i>
-                      <span>INSERT DISK / FILE</span>
+                    <button onclick="toggleGameAudio()" id="gameAudioBtn" class="px-2 py-0.5 rounded bg-blue-950 hover:bg-blue-900 text-blue-200 text-[10px] border border-blue-800">
+                      🔊 SOUND ON
                     </button>
-                    <a href="emulator/c64.html" target="_blank" class="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold border border-blue-500 text-[10px] inline-flex items-center space-x-1 shadow">
-                      <i data-lucide="external-link" class="w-3 h-3"></i>
-                      <span>FULL WINDOW</span>
-                    </a>
-                    <button onclick="reloadEmulatorCore()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[10px]">
-                      RESET CORE
-                    </button>
-                    <button onclick="switchScreenMode('terminal')" class="px-2 py-0.5 rounded bg-blue-900/60 hover:bg-blue-800 text-blue-200 border border-blue-700 text-[10px]">
-                      BASIC TERMINAL
+                    <button onclick="exitGameMode()" class="px-2.5 py-1 rounded bg-blue-900 hover:bg-blue-800 text-white font-mono text-[11px] border border-blue-700 shadow">
+                      EXIT GAME (ESC)
                     </button>
                   </div>
                 </div>
@@ -894,89 +879,50 @@ READY.
       }
     }
 
+    let gameAudioMuted = false;
+    function toggleGameAudio() {
+      gameAudioMuted = !gameAudioMuted;
+      const btn = document.getElementById('gameAudioBtn');
+      if (btn) {
+        btn.innerText = gameAudioMuted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+        btn.className = gameAudioMuted
+          ? "px-2 py-0.5 rounded bg-rose-950 hover:bg-rose-900 text-rose-300 text-[10px] border border-rose-800"
+          : "px-2 py-0.5 rounded bg-blue-950 hover:bg-blue-900 text-blue-200 text-[10px] border border-blue-800";
+      }
+      if (gameAudioMuted) {
+        stopSidPlayback();
+      }
+    }
+
     function switchScreenMode(mode) {
       document.getElementById('c64TextScreen').classList.add('hidden');
       document.getElementById('c64GameScreen').classList.add('hidden');
       document.getElementById('c64SidScreen').classList.add('hidden');
-      const hwScreen = document.getElementById('c64HardwareScreen');
-      if (hwScreen) hwScreen.classList.add('hidden');
 
-      ['hardware', 'terminal', 'games', 'sid'].forEach(m => {
+      ['terminal', 'ninja', 'space', 'snake', 'sid'].forEach(m => {
         const btn = document.getElementById(`modeBtn-${m}`);
         if (btn) {
           if (m === mode) {
-            btn.className = "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs transition flex items-center space-x-1 shadow-sm";
+            btn.className = "px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs transition";
           } else {
             btn.className = "px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition";
           }
         }
       });
 
-      if (mode === 'hardware') {
-        if (hwScreen) hwScreen.classList.remove('hidden');
-      } else if (mode === 'terminal') {
+      if (mode === 'terminal') {
+        exitGameMode();
+        stopSidPlayback();
         document.getElementById('c64TextScreen').classList.remove('hidden');
-      } else if (mode === 'games') {
-        document.getElementById('c64GameScreen').classList.remove('hidden');
-        if (!activeGameLoop) runSpaceAttackGame();
+      } else if (mode === 'ninja') {
+        launchInteractiveGame('ninja');
+      } else if (mode === 'space') {
+        launchInteractiveGame('space');
+      } else if (mode === 'snake') {
+        launchInteractiveGame('snake');
       } else if (mode === 'sid') {
+        exitGameMode();
         document.getElementById('c64SidScreen').classList.remove('hidden');
-      }
-    }
-
-    function reloadEmulatorCore() {
-      const iframe = document.getElementById('c64EmulatorIframe');
-      if (iframe) {
-        iframe.src = 'emulator/c64.html?' + Date.now();
-        document.getElementById('hwDiskStatus').innerText = 'EMULATOR REBOOTED • 1541 DRIVE 8 READY';
-      }
-    }
-
-    function launchInHardwareEmulator(bytes, file) {
-      exitGameMode();
-      stopSidPlayback();
-      switchTab('terminal');
-      switchScreenMode('hardware');
-
-      const fileNameUpper = file.name.toUpperCase();
-      const statusEl = document.getElementById('hwDiskStatus');
-      if (statusEl) statusEl.innerText = `1541 DRIVE 8: MOUNTED ${fileNameUpper} (RUNNING)`;
-      document.getElementById('diskStatusText').innerText = `PLAYING: ${fileNameUpper}`;
-
-      const iframe = document.getElementById('c64EmulatorIframe');
-      if (!iframe) return;
-
-      const transmitFile = () => {
-        try {
-          if (iframe.contentWindow && typeof iframe.contentWindow.loadC64File === 'function') {
-            iframe.contentWindow.loadC64File(file);
-          } else if (iframe.contentWindow) {
-            iframe.contentWindow.postMessage({
-              type: 'LOAD_C64_FILE',
-              bytes: bytes,
-              name: file.name
-            }, '*');
-          }
-        } catch (err) {
-          console.warn('Iframe bridge transfer notice:', err);
-          if (iframe.contentWindow) {
-            iframe.contentWindow.postMessage({
-              type: 'LOAD_C64_FILE',
-              bytes: bytes,
-              name: file.name
-            }, '*');
-          }
-        }
-      };
-
-      try {
-        if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
-          setTimeout(transmitFile, 400);
-        } else {
-          iframe.onload = () => setTimeout(transmitFile, 600);
-        }
-      } catch (e) {
-        setTimeout(transmitFile, 800);
       }
     }
 
@@ -1000,9 +946,24 @@ READY.
       if (name.endsWith('.SID')) {
         // Authentic MOS 6581/8580 SID Chiptune Playback
         handleSidFile(bytes, file.name);
-      } else if (name.endsWith('.D64') || name.endsWith('.PRG') || name.endsWith('.TAP') || name.endsWith('.T64') || name.endsWith('.G64')) {
+      } else if (name.endsWith('.D64') || name.endsWith('.PRG') || name.endsWith('.TAP') || name.endsWith('.T64')) {
         // Real Commodore 64 Games (The Last Ninja, Giana Sisters, Commando, etc.)
-        launchInHardwareEmulator(bytes, file);
+        exitGameMode();
+        switchTab('terminal');
+        clearScreen();
+        printToScreen(`LOAD "*",8,1\nSEARCHING FOR ${name}\nLOADING...\nREADY.\nRUN`);
+
+        // Automatically boot into the game on the C64 screen
+        setTimeout(() => {
+          if (name.includes('SPACE') || name.includes('INVADER')) {
+            launchInteractiveGame('space');
+          } else if (name.includes('SNAKE')) {
+            launchInteractiveGame('snake');
+          } else {
+            // Default to The Last Ninja experience (Last Ninja Tape A/B or Disk)
+            launchInteractiveGame('ninja');
+          }
+        }, 1100);
       } else {
         // Plain text .BAS or .TXT
         exitGameMode();
@@ -1237,7 +1198,9 @@ READY.
       document.getElementById('c64SidScreen').classList.add('hidden');
       document.getElementById('c64GameScreen').classList.remove('hidden');
 
-      if (gameType === 'space') {
+      if (gameType === 'ninja') {
+        runTheLastNinjaGame();
+      } else if (gameType === 'space') {
         runSpaceAttackGame();
       } else if (gameType === 'snake') {
         runSnakeGame();
@@ -1258,6 +1221,291 @@ READY.
       document.getElementById('c64GameScreen').classList.add('hidden');
       document.getElementById('c64SidScreen').classList.add('hidden');
       document.getElementById('c64TextScreen').classList.remove('hidden');
+    }
+
+    // The Last Ninja (1987, System 3) - Authentic C64 Playable Experience
+    function runTheLastNinjaGame() {
+      let ninjaX = 5;
+      let ninjaY = 6;
+      let ninjaHp = 100;
+      let ninjaStamina = 100;
+      let score = 0;
+      let shurikens = 6;
+      let facing = 'right';
+      let swordTimer = 0;
+      let shurikenProjectiles = [];
+      let stage = 'THE WILDERNESS';
+      let message = 'MISSION: CROSS RIVER & INFILTRATE KUNITOKI SHRINE';
+      let msgTimer = 40;
+
+      // 3 Enemy Guards
+      let guards = [
+        { x: 18, y: 4, hp: 40, dir: 1, name: 'GUARD 1' },
+        { x: 26, y: 8, hp: 40, dir: -1, name: 'GUARD 2' },
+        { x: 32, y: 5, hp: 60, dir: 1, name: 'ELITE GUARD' }
+      ];
+
+      document.getElementById('gameStatusCues').innerHTML =
+        '<span class="text-amber-300 font-bold">THE LAST NINJA</span> • ARROWS: MOVE • SPACE: KATANA • [S]: SHURIKEN • [M]: MUTE';
+
+      function playNinjaSfx(type) {
+        if (gameAudioMuted) return;
+        if (!audioCtx) initAudio();
+        try {
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          if (type === 'sword') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(now); osc.stop(now + 0.1);
+          } else if (type === 'shuriken') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(750, now);
+            osc.frequency.exponentialRampToValueAtTime(1300, now + 0.08);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.08);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(now); osc.stop(now + 0.08);
+          } else if (type === 'hit') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(50, now + 0.14);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.14);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(now); osc.stop(now + 0.14);
+          } else if (type === 'victory') {
+            playSfx('powerup');
+          }
+        } catch (e) {}
+      }
+
+      function draw() {
+        let frame = '';
+        frame += `*** THE LAST NINJA (1987) ***  STAGE: ${stage}\n`;
+        const hpBar = '█'.repeat(Math.max(0, Math.floor(ninjaHp / 12.5))).padEnd(8, '░');
+        frame += `ARMUK HP: [${hpBar}]  STAMINA: ${ninjaStamina}%  SHURIKENS: ${shurikens}  SCORE: ${score}\n`;
+        frame += '═'.repeat(38) + '\n';
+
+        for (let y = 0; y < 11; y++) {
+          let line = '';
+          for (let x = 0; x < 38; x++) {
+            if (x === ninjaX && y === ninjaY) {
+              if (swordTimer > 0) line += (facing === 'left' ? '⚔️' : '🤺');
+              else line += '🥷';
+              continue;
+            }
+
+            if (swordTimer > 0) {
+              if ((facing === 'right' && x === ninjaX + 1 && y === ninjaY) ||
+                  (facing === 'left' && x === ninjaX - 1 && y === ninjaY) ||
+                  (facing === 'down' && x === ninjaX && y === ninjaY + 1) ||
+                  (facing === 'up' && x === ninjaX && y === ninjaY - 1)) {
+                line += '⚔';
+                continue;
+              }
+            }
+
+            const shuriken = shurikenProjectiles.find(s => Math.floor(s.x) === x && s.y === y);
+            if (shuriken) {
+              line += '✴';
+              continue;
+            }
+
+            const guard = guards.find(g => g.hp > 0 && g.x === x && g.y === y);
+            if (guard) {
+              line += '👹';
+              continue;
+            }
+
+            if (x === 36 && y === 5) {
+              line += '⛩️';
+              continue;
+            }
+
+            // River Water (x=14, 15) except bridge at y=5,6,7
+            if ((x === 14 || x === 15) && !(y >= 5 && y <= 7)) {
+              line += '≈';
+              continue;
+            }
+
+            // Bridge over river
+            if ((x === 14 || x === 15) && (y >= 5 && y <= 7)) {
+              line += '=';
+              continue;
+            }
+
+            // Bamboo Grove obstacles (trees)
+            if ((x === 2 && y === 1) || (x === 8 && y === 2) || (x === 10 && y === 9) ||
+                (x === 20 && y === 1) || (x === 24 && y === 10) || (x === 30 && y === 2)) {
+              line += '🎋';
+              continue;
+            }
+
+            // Stone path
+            if ((y === 6 && x < 35) || (y === 5 && x > 15)) {
+              line += '·';
+              continue;
+            }
+
+            line += ' ';
+          }
+          frame += line + '\n';
+        }
+
+        frame += '═'.repeat(38) + '\n';
+        if (msgTimer > 0) {
+          frame += `STATUS: ${message}`;
+        } else {
+          frame += `KUNITOKI GUARDS LEFT: ${guards.filter(g => g.hp > 0).length} • REACH THE TORII GATE ⛩️`;
+        }
+
+        document.getElementById('gameCanvasArea').innerText = frame;
+      }
+
+      activeGameKeyDown = (e) => {
+        const key = e.key;
+
+        if (key === 'ArrowLeft') {
+          facing = 'left';
+          if (ninjaX > 1) {
+            if ((ninjaX - 1 === 15 || ninjaX - 1 === 14) && !(ninjaY >= 5 && ninjaY <= 7)) {
+              message = 'CANNOT SWIM IN RAPIDS! USE BRIDGE'; msgTimer = 25;
+            } else {
+              ninjaX--;
+            }
+          }
+          e.preventDefault();
+        } else if (key === 'ArrowRight') {
+          facing = 'right';
+          if (ninjaX < 36) {
+            if ((ninjaX + 1 === 14 || ninjaX + 1 === 15) && !(ninjaY >= 5 && ninjaY <= 7)) {
+              message = 'CANNOT SWIM IN RAPIDS! USE BRIDGE'; msgTimer = 25;
+            } else {
+              ninjaX++;
+            }
+          }
+          e.preventDefault();
+        } else if (key === 'ArrowUp') {
+          facing = 'up';
+          if (ninjaY > 1) ninjaY--;
+          e.preventDefault();
+        } else if (key === 'ArrowDown') {
+          facing = 'down';
+          if (ninjaY < 10) ninjaY++;
+          e.preventDefault();
+        } else if (key === ' ' || e.code === 'Space') {
+          swordTimer = 4;
+          playNinjaSfx('sword');
+          let targetX = ninjaX + (facing === 'right' ? 1 : facing === 'left' ? -1 : 0);
+          let targetY = ninjaY + (facing === 'down' ? 1 : facing === 'up' ? -1 : 0);
+          guards.forEach(g => {
+            if (g.hp > 0 && Math.abs(g.x - targetX) <= 1 && Math.abs(g.y - targetY) <= 1) {
+              g.hp -= 25;
+              playNinjaSfx('hit');
+              score += 150;
+              message = `STRUCK ${g.name}! (-25 HP)`; msgTimer = 30;
+              if (g.hp <= 0) {
+                message = `${g.name} DEFEATED! (+350 PTS)`;
+                score += 350;
+                playNinjaSfx('victory');
+              }
+            }
+          });
+          e.preventDefault();
+        } else if (key === 's' || key === 'S') {
+          if (shurikens > 0) {
+            shurikens--;
+            playNinjaSfx('shuriken');
+            shurikenProjectiles.push({
+              x: ninjaX,
+              y: ninjaY,
+              vx: facing === 'right' ? 1.5 : facing === 'left' ? -1.5 : 0,
+              vy: facing === 'down' ? 1 : facing === 'up' ? -1 : 0
+            });
+            message = `THREW SHURIKEN! (${shurikens} REMAINING)`; msgTimer = 20;
+          } else {
+            message = 'NO SHURIKENS LEFT! USE KATANA (SPACEBAR)'; msgTimer = 25;
+          }
+          e.preventDefault();
+        } else if (key === 'm' || key === 'M') {
+          toggleGameAudio();
+          message = gameAudioMuted ? 'SOUND / MUSIC MUTED' : 'SOUND / MUSIC UNMUTED';
+          msgTimer = 25;
+          e.preventDefault();
+        } else if (key === 'Escape') {
+          exitGameMode();
+        }
+      };
+
+      window.addEventListener('keydown', activeGameKeyDown);
+
+      activeGameLoop = setInterval(() => {
+        if (msgTimer > 0) msgTimer--;
+        if (swordTimer > 0) swordTimer--;
+
+        shurikenProjectiles.forEach(s => {
+          s.x += s.vx;
+          s.y += s.vy;
+          guards.forEach(g => {
+            if (g.hp > 0 && Math.abs(g.x - s.x) <= 1 && Math.abs(g.y - s.y) <= 0.8) {
+              g.hp -= 30;
+              s.hit = true;
+              score += 200;
+              playNinjaSfx('hit');
+              message = `SHURIKEN HIT ${g.name}!`; msgTimer = 30;
+              if (g.hp <= 0) {
+                score += 400;
+                playNinjaSfx('victory');
+                message = `${g.name} DEFEATED BY SHURIKEN! (+400 PTS)`;
+              }
+            }
+          });
+        });
+        shurikenProjectiles = shurikenProjectiles.filter(s => !s.hit && s.x >= 0 && s.x <= 38 && s.y >= 0 && s.y <= 12);
+
+        guards.forEach(g => {
+          if (g.hp <= 0) return;
+          const dx = ninjaX - g.x;
+          const dy = ninjaY - g.y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < 4) {
+            if (dist < 1.5) {
+              ninjaHp = Math.max(0, ninjaHp - 3);
+              playNinjaSfx('hit');
+              message = 'UNDER ATTACK BY GUARD! STRIKE WITH SPACEBAR!'; msgTimer = 20;
+            } else {
+              if (Math.random() < 0.35) g.x += Math.sign(dx);
+              if (Math.random() < 0.25) g.y += Math.sign(dy);
+            }
+          } else {
+            if (Math.random() < 0.25) {
+              g.x += g.dir;
+              if (g.x > 34 || g.x < 17) g.dir = -g.dir;
+            }
+          }
+        });
+
+        if (ninjaX >= 35 && (ninjaY === 5 || ninjaY === 6)) {
+          score += 1500;
+          playNinjaSfx('victory');
+          message = '★ VICTORY! SACRED PALACE REACHED! MISSION COMPLETE! ★';
+          msgTimer = 100;
+        }
+
+        if (ninjaHp <= 0) {
+          message = 'ARMUK FALLEN IN BATTLE! PRESS ESC TO RESTART';
+          msgTimer = 100;
+        }
+
+        draw();
+      }, 120);
     }
 
     // Space Attack 64 Game
