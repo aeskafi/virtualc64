@@ -32,6 +32,12 @@ body {
 </style>
 </head>
 <body>
+  <div style="position:fixed;top:10px;right:10px;z-index:999;display:flex;gap:8px;">
+    <input type="file" id="standaloneFileInput" onchange="if(this.files[0])window.loadC64File(this.files[0])" accept=".d64,.prg,.tap,.t64" style="display:none">
+    <button onclick="document.getElementById('standaloneFileInput').click()" style="background:#0f172a;color:#38bdf8;border:1px solid #334155;padding:6px 12px;font-family:monospace;font-size:11px;font-weight:bold;border-radius:8px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.4);display:flex;align-items:center;gap:6px;">
+      <span>💾 INSERT DISK / FILE (.D64 / .PRG / .TAP)</span>
+    </button>
+  </div>
   <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
   <script type="text/javascript" src="c64_wasm_data.js"></script>
   <script type="text/javascript">
